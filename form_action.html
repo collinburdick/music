@@ -1,0 +1,105 @@
+<html>
+    <head>
+        <title>Soundcloud Downloader</title>
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+		<script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
+		<script>
+			// Initialize Firebase
+			var downloadURL;
+			var blobFile;
+			var config = {
+				apiKey: "AIzaSyCVFwP_mRqirelrMEkKN_L6oyq-_8A7p-U",
+				authDomain: "collinburdick.firebaseapp.com",
+				databaseURL: "https://collinburdick.firebaseio.com",
+				storageBucket: "project-5787587864649516714.appspot.com",
+			};
+			firebase.initializeApp(config);
+			var storage = firebase.storage().ref();
+			var soundcloudRef = storage.child('SoundCloud');
+			var userSoundcloudRef = soundcloudRef.child('CollinBurdick');
+			
+			var email = "collin.burdick@gmail.com";
+			var password = "cubsports";
+			
+			firebase.auth().signInWithEmailAndPassword(email, password).catch(function(error) {
+				// Handle Errors here.
+				var errorCode = error.code;
+				var errorMessage = error.message;
+				alert("Sign-In Error (Code: " + errorCode + "): " + errorMessage);
+			});
+			
+			//save file from URL
+			function saveFile(filename, url, callback) {
+				//notify user we're working on it...
+				document.getElementById("working").innerHTML = "Hang Tight: Working on Your Request...";
+				// Get file name from url.
+				var xhr = new XMLHttpRequest();
+				xhr.responseType = 'blob';
+				xhr.onload = function() {
+					var a = document.createElement('a');
+					blobFile = new Blob([this.response], {type: 'audio/mpeg'});
+					var metadata = {
+						contentType: 'mp3',
+					};
+					// Upload the file to the path
+					// We can use the 'name' property on the File API to get our file name
+					var uploadTask = userSoundcloudRef.child(filename).put(blobFile, metadata);
+					// Register three observers:
+					// 1. 'state_changed' observer, called any time the state changes
+					// 2. Error observer, called on failure
+					// 3. Completion observer, called on successful completion
+					uploadTask.on('state_changed', function(snapshot){
+						// Observe state change events such as progress, pause, and resume
+						var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+						document.getElementById("working").innerHTML = 'Database Upload ' + Math.round(progress) + '% Complete';
+					}, function(error) {
+						document.getElementById("working").innerHTML = "Error uploading to firebase";
+						return;
+					}, function() {
+						// Handle successful uploads on complete
+						document.getElementById("working").innerHTML = "";
+						delete a;
+						downloadURL = uploadTask.snapshot.downloadURL;
+					});
+						a.href = window.URL.createObjectURL(xhr.response);
+						a.download = filename;
+						a.style.display = 'none';
+						document.body.appendChild(a);
+						a.click();
+					};
+				xhr.open('GET', url);
+				xhr.send();
+			}
+		</script>
+	</head>
+	<body>
+        <div id="container">
+            <div class="title">
+                <h1>Soundcloud Favorites Downloader</h1>
+            </div>
+            <div id="content">
+				<h2>Download Your Songs</h2>
+                User: <strong>{{soundcloud_username}}</strong><br>
+				<div id="working"></div><br>
+				<!--<form method="post" action="{{ url_for('soundcloudlikeszipdownload') }}">
+					<label for="favorites"></label>
+					<input type="hidden" name="favorites" value='{{favorites}}' />
+					<input type="submit" value="Download All Songs as ZIP File" onclick='return working();'>
+				</form>-->
+				<ol>
+					{% for name, url in favorites %}
+						<li>		
+							<form>
+								<label for="likename"></label>
+								<input type="hidden" name="likename" value='{{name}}' />
+								<label for="likeurl"></label>
+								<input type="hidden" name="likeurl" value='{{url}}' />
+								<input type="button" value='Download: {{name}}' onclick='saveFile(likename.value, likeurl.value);'/>
+							</form>
+						</li>
+					{% endfor %}	
+				</ol>				
+			</div>
+        </div>
+    </body>
+</html>

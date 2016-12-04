@@ -1,0 +1,26 @@
+<html>
+    <head>
+        <title>Soundcloud Downloader</title>
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+		<script src="{{ url_for('static', filename='script.js') }}"></script>
+    </head>
+    <body>
+        <div id="container">
+            <div class="title">
+                <h1>Download your Soundcloud Favorites</h1>
+            </div>
+			<div id="working"></div>
+            <div id="content">
+				<form method="post" action="{{ url_for('soundcloudfavorites') }}">
+					<label for="youremail">Soundcloud Email:</label>
+					<input type="email" name="youremail" /><br />
+					<label for="yourpassword">Soundcloud Password:</label>
+					<input type="password" name="yourpassword" /><br />
+					<label for="numberoflikes"># Most Recent Likes:</label>
+					<input type="number" name="numberoflikes" /><br />
+					<input type="submit" value="Get My Favorites" onclick='return working();'/>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>
